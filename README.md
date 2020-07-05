@@ -1,10 +1,24 @@
-TODO-app for [DevOps with Kubernetes course](https://devopswithkubernetes.com/). Backend is written in Go.
+TODO-app for [DevOps with Kubernetes course](https://devopswithkubernetes.com/). Backend is written with Go. Frontend with elm.
 
-To start app
+## depends on
+`Elm` and `Go`.
+
+## backend
+To start backend
 ```
-go run backend/server.go
+cd backend
+go run server.go
 ```
 or make binary with
 ```
-go build backend/server.go
+go build server.go
 ```
+
+
+## frontend
+To compile frontend
+```
+cd frontend
+elm make src/Main.elm
+```
+After that you can serve `index.html` file with backend.
