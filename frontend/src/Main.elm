@@ -5,112 +5,52 @@ module Main exposing (main)
 import Browser
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (on, onClick, onInput, targetValue)
-import Json.Decode as Json
-import Validation exposing (ValidationResult)
+import Html.Events exposing (onInput)
 
 
-main : Program () Form Msg
+-- MAIN
+main : Program () Model Msg
 main =
-    Browser.sandbox
-        { init = init
-        , view = view
-        , update = update
-        }
+  Browser.sandbox { init = init, update = update, view = view }
 
 
+-- MODEL
 type alias Model =
   { name : String
-  --, todos : List String
+  , todos : List String
   }
 
-
-type alias Form =
-  { name : ValidationResult String
-  }
-
-
-init : Form
+init : Model
 init =
-  { name = Validation.Initial
-  }
+  { name = ""
+  , todos = ["Osta maitoa", "Kastele kukat"]}
 
 
+-- UPDATE
 type Msg
-  = SetName (ValidationResult String)
-  | Submit Model
+  = Name String
 
-
-update : Msg -> Form -> Form
-update msg form =
+update : Msg -> Model -> Model
+update msg model =
   case msg of
-    SetName result ->
-      { form | name = result }
-    Submit model ->
-      let
-        _ =  model
-      in
-      form
+    Name name ->
+      { model | name = name }
 
-
-view : Form -> Html Msg
-view form =
-  let
-    nameValid =
-      Validation.validate isRequired
-    formState =
-      Validation.valid Model
-        |> Validation.andMap form.name
-  in
-  div [ class "form" ]
-    [ div [ class "form__field" ]
-      [ label [ for "name" ] [ text "Name" ]
-      , input
-        ([ type_ "text"
-          , name "name"
-          , onInput (Validation.unvalidated >> SetName)
-          , onBlur (nameValid >> SetName)
-          ]
-            ++ validInputStyle form.name
-        )
-        []
-    , div [ class "form__error" ]
-      [ text
-        (Validation.message form.name
-          |> Maybe.withDefault ""
-        )
-      ]
-    ]
-    , div [ class "form__submit" ]
-      (case formState of
-        Validation.Valid model ->
-          [ button [ onClick (Submit model) ] [ text "Save" ]
-          ]
-        _ -> []
-      )
-    , div [] [ text "ata" ]
+-- VIEW
+view : Model -> Html Msg
+view model =
+  div []
+    [ viewInput "text" "Name" model.name Name
+    , viewValidation model
     ]
 
+viewInput : String -> String -> String -> (String -> msg) -> Html msg
+viewInput t p v toMsg =
+  div[] [ input [ type_ t, placeholder p, value v, onInput toMsg ] [] ]
 
-validInputStyle : ValidationResult x -> List (Attribute msg)
-validInputStyle result =
-    if Validation.isInvalid result then
-        [ style "background-color" "pink" ]
-
-    else
-        []
-
-
-isRequired : String -> Result String String
-isRequired raw =
-    if String.length raw < 1 then
-      Err "Required"
-    else if String.length raw > 14 then
-      Err "Too long input"
-    else
-        Ok raw
-
-
-onBlur : (String -> msg) -> Html.Attribute msg
-onBlur tagger =
-    on "blur" (Json.map tagger targetValue)
+viewValidation : Model -> Html msg
+viewValidation model =
+  if model.name == "asdf" then
+    div [ style "color" "green" ] [ text "OK" ]
+  else
+    div [ style "color" "red" ] [ text "Passwords do not match!" ]
