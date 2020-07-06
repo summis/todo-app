@@ -3,54 +3,114 @@ module Main exposing (main)
 
 
 import Browser
-import Html exposing (Html, div, input, text, button, ul, li)
-import Html.Attributes exposing (placeholder, value)
-import Html.Events exposing (onInput, onClick)
+import Html exposing (..)
+import Html.Attributes exposing (..)
+import Html.Events exposing (on, onClick, onInput, targetValue)
+import Json.Decode as Json
+import Validation exposing (ValidationResult)
 
 
--- MAIN
-main: Program () Model Msg
+main : Program () Form Msg
 main =
-  Browser.sandbox { init = init, update = update, view = view }
+    Browser.sandbox
+        { init = init
+        , view = view
+        , update = update
+        }
 
 
--- MODEL
 type alias Model =
-  { content : String
-  , todos : List String
+  { name : String
+  --, todos : List String
   }
 
-init : Model
+
+type alias Form =
+  { name : ValidationResult String
+  }
+
+
+init : Form
 init =
-  { content = ""
-  , todos = ["Osta maitoa", "Kastele kukat"] }
+  { name = Validation.Initial
+  }
 
 
--- UPDATE
 type Msg
-  = Change String
-  | AddToList
+  = SetName (ValidationResult String)
+  | Submit Model
 
-update : Msg -> Model -> Model
-update msg model =
+
+update : Msg -> Form -> Form
+update msg form =
   case msg of
-    Change newContent ->
-      { model | content = newContent }
-    AddToList ->
-      { model | todos = model.todos ++ [ model.content ], content = "" }
+    SetName result ->
+      { form | name = result }
+    Submit model ->
+      let
+        _ =  model
+      in
+      form
 
 
--- VIEW
-renderList : List String -> Html msg
-renderList lst =
-    ul []
-        (List.map (\l -> li [] [ text l ]) lst)
-
-
-view : Model -> Html Msg
-view model =
-  div []
-    [ div [] [ input [ placeholder "What is on your mind", value model.content, onInput Change ] [] ]
-    , button [ onClick AddToList ] [ text "Add to List" ]
-    , div [] [ renderList model.todos ]
+view : Form -> Html Msg
+view form =
+  let
+    nameValid =
+      Validation.validate isRequired
+    formState =
+      Validation.valid Model
+        |> Validation.andMap form.name
+  in
+  div [ class "form" ]
+    [ div [ class "form__field" ]
+      [ label [ for "name" ] [ text "Name" ]
+      , input
+        ([ type_ "text"
+          , name "name"
+          , onInput (Validation.unvalidated >> SetName)
+          , onBlur (nameValid >> SetName)
+          ]
+            ++ validInputStyle form.name
+        )
+        []
+    , div [ class "form__error" ]
+      [ text
+        (Validation.message form.name
+          |> Maybe.withDefault ""
+        )
+      ]
     ]
+    , div [ class "form__submit" ]
+      (case formState of
+        Validation.Valid model ->
+          [ button [ onClick (Submit model) ] [ text "Save" ]
+          ]
+        _ -> []
+      )
+    , div [] [ text "ata" ]
+    ]
+
+
+validInputStyle : ValidationResult x -> List (Attribute msg)
+validInputStyle result =
+    if Validation.isInvalid result then
+        [ style "background-color" "pink" ]
+
+    else
+        []
+
+
+isRequired : String -> Result String String
+isRequired raw =
+    if String.length raw < 1 then
+      Err "Required"
+    else if String.length raw > 14 then
+      Err "Too long input"
+    else
+        Ok raw
+
+
+onBlur : (String -> msg) -> Html.Attribute msg
+onBlur tagger =
+    on "blur" (Json.map tagger targetValue)
