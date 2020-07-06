@@ -1,11 +1,11 @@
--- TODO: save and get todos from backend
+-- TODO: save and get todoNotes from backend
 module Main exposing (main)
 
 
 import Browser
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onInput)
+import Html.Events exposing (onInput, onClick)
 
 
 -- MAIN
@@ -16,41 +16,57 @@ main =
 
 -- MODEL
 type alias Model =
-  { name : String
-  , todos : List String
+  { newTodoNote : String
+  , todoNotes : List String
   }
 
 init : Model
 init =
-  { name = ""
-  , todos = ["Osta maitoa", "Kastele kukat"]}
+  { newTodoNote = ""
+  , todoNotes = ["Osta maitoa", "Kastele kukat"]}
 
 
 -- UPDATE
 type Msg
-  = Name String
+  = ChangeNote String
+  | AddToList
 
 update : Msg -> Model -> Model
 update msg model =
   case msg of
-    Name name ->
-      { model | name = name }
+    ChangeNote newTodoNote ->
+      { model | newTodoNote = newTodoNote }
+    AddToList ->
+      { model | todoNotes = model.todoNotes ++ [ model.newTodoNote ], newTodoNote = "" }
+
 
 -- VIEW
 view : Model -> Html Msg
 view model =
   div []
-    [ viewInput "text" "Name" model.name Name
+    [ img [ src "/random_image" ] []
+    , viewInput "text" "What is on your mind?" model.newTodoNote ChangeNote
     , viewValidation model
+    , renderList model.todoNotes 
     ]
 
 viewInput : String -> String -> String -> (String -> msg) -> Html msg
 viewInput t p v toMsg =
   div[] [ input [ type_ t, placeholder p, value v, onInput toMsg ] [] ]
 
-viewValidation : Model -> Html msg
+viewValidation : Model -> Html Msg
 viewValidation model =
-  if model.name == "asdf" then
-    div [ style "color" "green" ] [ text "OK" ]
+  if String.length model.newTodoNote < 1 then
+    div [ ] [ button [ disabled True ] [ text "Add to List" ] ]
+  else if String.length model.newTodoNote > 140 then
+    div [ ]
+      [ button [ disabled True ] [ text "Add to List" ]
+      , span [ style "color" "red", style "margin-left" "0.5em" ] [ text "Too long input!" ]
+      ]
   else
-    div [ style "color" "red" ] [ text "Passwords do not match!" ]
+    div [ ] [ button [ onClick AddToList ] [ text "Add to List" ] ]
+
+renderList : List String -> Html Msg
+renderList lst =
+  ul []
+    (List.map (\l -> li [] [ text l ]) lst)
