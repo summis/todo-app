@@ -6,5 +6,5 @@ import Html.Attributes exposing (src)
 main =
   div []
     [
-      img [ src "/random_image" ] []
+      img [ src "/random_image/" ] []
     ]

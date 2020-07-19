@@ -4,14 +4,17 @@ WORKDIR /app
 
 COPY . .
 
-RUN go build backend/server.go
+RUN cd backend && go build server.go
+
+# Directory where images are saved
+RUN [ ! -d files ] && mkdir files || exit 0
 
 
 FROM alpine
 
-WORKDIR /app
+COPY --from=build-stage /app/ /app/
 
-COPY --from=build-stage /app/server /app/server
+WORKDIR /app/backend
 
 CMD ["./server"]
 
