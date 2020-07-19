@@ -14,4 +14,4 @@ spec:
     spec:
       containers:
         - name: todo-app
-          image: summila/todo-app:v0.2
+          image: summila/todo-app:v0.6
