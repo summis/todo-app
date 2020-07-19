@@ -17,4 +17,3 @@ COPY --from=build-stage /app/ /app/
 WORKDIR /app/backend
 
 CMD ["./server"]
-
